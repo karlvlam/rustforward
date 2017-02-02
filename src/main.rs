@@ -87,46 +87,13 @@ fn start_listener(src_addr: String, dest_addr: String) {
     }
 }
 
-fn pass_bytes(mut stream: TcpStream, tx: Sender<TcpBuffer>, rx: Receiver<TcpBuffer>) {
-    let mut buf: [u8; 128] = [0; 128];
-    loop {
-        let res = stream.read(&mut buf);
-        match res {
-            Ok(byte_count) => {
-                if byte_count == 0 {
-                    stream.shutdown(Shutdown::Both);
-                    break;
-                }
-                tx.send(TcpBuffer{data:buf, length:byte_count});
-                //println!("{:?}", &buf[0 .. byte_count]);
-            }
-            Err(e) => {
-                //println!("Error: {:?}", e);
-                //stream.shutdown(Shutdown::Both);
-                //break;
-                thread::sleep(time::Duration::from_millis(5));
-            }
-        }
-        match rx.try_recv() {
-            Ok(TcpBuffer{data, length}) => {
-                //println!("GET: {:?}", byte);
-                stream.write(&data[0..length]);
-            }
-            Err(e) => {
-                //println!("RECV error: {:?}", e);
-            }
-        }
-
-    }
-}
-
-fn handle_client(src_stream: TcpStream, dest_addr: &str){
+fn handle_client(mut src_stream: TcpStream, dest_addr: &str){
 
     let (dest_tx, dest_rx) : (Sender<TcpBuffer>, Receiver<TcpBuffer>) = channel();
     let (src_tx, src_rx) : (Sender<TcpBuffer>, Receiver<TcpBuffer>) = channel();
 
     let dest_connection = TcpStream::connect(dest_addr);
-    let dest_stream;
+    let mut dest_stream: TcpStream;
 
     match dest_connection{
         Ok(stream) => {
@@ -141,10 +108,45 @@ fn handle_client(src_stream: TcpStream, dest_addr: &str){
     src_stream.set_nonblocking(true);
     dest_stream.set_nonblocking(true);
 
-    thread::spawn( move|| {
-        pass_bytes(src_stream, dest_tx, src_rx);
-    });
-    thread::spawn( move|| {
-        pass_bytes(dest_stream, src_tx, dest_rx);
-    });
+    let mut src_buf: [u8; 128] = [0; 128];
+    let mut dest_buf: [u8; 128] = [0; 128];
+    loop {
+        let res = src_stream.read(&mut src_buf);
+        match res {
+            Ok(byte_count) => {
+                if byte_count == 0 {
+                    src_stream.shutdown(Shutdown::Both);
+                    break;
+                }
+                dest_stream.write(&src_buf[0..byte_count]);
+                //println!("{:?}", &buf[0 .. byte_count]);
+            }
+            Err(e) => {
+                //println!("Error: {:?}", e);
+                //stream.shutdown(Shutdown::Both);
+                //break;
+            }
+        }
+
+        let res = dest_stream.read(&mut dest_buf);
+        match res {
+            Ok(byte_count) => {
+                if byte_count == 0 {
+                    dest_stream.shutdown(Shutdown::Both);
+                    break;
+                }
+                src_stream.write(&dest_buf[0..byte_count]);
+                //println!("{:?}", &buf[0 .. byte_count]);
+            }
+            Err(e) => {
+                //println!("Error: {:?}", e);
+                //stream.shutdown(Shutdown::Both);
+                //break;
+                thread::sleep(time::Duration::from_millis(5));
+            }
+        }
+
+    }
+
+
 }
