@@ -1,0 +1,6 @@
+[package]
+name = "rustforward"
+version = "0.0.1"
+authors = ["Karl Lam <karl.v.lam@gmail.com>"]
+
+[dependencies]
