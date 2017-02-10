@@ -21,7 +21,7 @@ fn main(){
 
     for (key, value) in config {
         thread::spawn( move|| {
-            start_listener(key, value);
+            start_listener(&key, &value);
         });
     }
 
@@ -64,7 +64,7 @@ fn read_file(path: String, mut config: HashMap<String, String>) -> HashMap<Strin
 }
 
 
-fn start_listener(src_addr: String, dest_addr: String) {
+fn start_listener(src_addr: &String, dest_addr: &String) {
     let listener = TcpListener::bind(src_addr.as_str()).unwrap();
     println!("Port forward started {} -> {}", src_addr, dest_addr);
     for stream in listener.incoming(){
