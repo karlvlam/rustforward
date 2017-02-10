@@ -63,10 +63,6 @@ fn read_file(path: String, mut config: HashMap<String, String>) -> HashMap<Strin
     config
 }
 
-struct TcpBuffer {
-    data: [u8; 128],
-    length: usize
-}
 
 fn start_listener(src_addr: String, dest_addr: String) {
     let listener = TcpListener::bind(src_addr.as_str()).unwrap();
@@ -88,9 +84,6 @@ fn start_listener(src_addr: String, dest_addr: String) {
 }
 
 fn handle_client(mut src_stream: TcpStream, dest_addr: &str){
-
-    let (dest_tx, dest_rx) : (Sender<TcpBuffer>, Receiver<TcpBuffer>) = channel();
-    let (src_tx, src_rx) : (Sender<TcpBuffer>, Receiver<TcpBuffer>) = channel();
 
     let dest_connection = TcpStream::connect(dest_addr);
     let mut dest_stream: TcpStream;
