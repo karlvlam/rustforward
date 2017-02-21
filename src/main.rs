@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::*;
 use std::net::*;
 use std::{thread, time};
-use std::sync::mpsc::{channel, Sender, Receiver};
 use std::collections::HashMap;
+
 
 fn main(){
 
@@ -98,8 +98,8 @@ fn handle_client(mut src_stream: TcpStream, dest_addr: &str){
         }
     }
 
-    src_stream.set_nonblocking(true);
-    dest_stream.set_nonblocking(true);
+    let _ = src_stream.set_nonblocking(true);
+    let _ = dest_stream.set_nonblocking(true);
 
     let mut src_buf: [u8; 128] = [0; 128];
     let mut dest_buf: [u8; 128] = [0; 128];
@@ -108,10 +108,10 @@ fn handle_client(mut src_stream: TcpStream, dest_addr: &str){
         match res {
             Ok(byte_count) => {
                 if byte_count == 0 {
-                    src_stream.shutdown(Shutdown::Both);
+                    let _ = src_stream.shutdown(Shutdown::Both);
                     break;
                 }
-                dest_stream.write(&src_buf[0..byte_count]);
+                let _ = dest_stream.write(&src_buf[0..byte_count]);
                 //println!("{:?}", &buf[0 .. byte_count]);
             }
             Err(e) => {
@@ -125,10 +125,10 @@ fn handle_client(mut src_stream: TcpStream, dest_addr: &str){
         match res {
             Ok(byte_count) => {
                 if byte_count == 0 {
-                    dest_stream.shutdown(Shutdown::Both);
+                    let _ = dest_stream.shutdown(Shutdown::Both);
                     break;
                 }
-                src_stream.write(&dest_buf[0..byte_count]);
+                let _ = src_stream.write(&dest_buf[0..byte_count]);
                 //println!("{:?}", &buf[0 .. byte_count]);
             }
             Err(e) => {
